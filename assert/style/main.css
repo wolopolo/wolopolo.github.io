@@ -1,0 +1,140 @@
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, Noto Sans, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
+    background-color: #443d3d;
+}
+
+.container {
+    padding: 50px 10% 0px 10%;
+}
+
+
+/* header */
+.topnav {
+    overflow: hidden;
+    background-color: #6b2e2e;
+    box-shadow: 0px 2px 6px #6e6e6e;
+    border-radius: 0px 0px 5px 5px;
+    position: fixed;
+    top: 0;
+    width: 80%;
+}
+
+.topnav a {
+    float: left;
+    display: block;
+    color: #fda500;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+    font-size: 17px;
+}
+
+.topnav a:hover {
+    background-color: rgb(141, 73, 34);
+    color: wheat;
+    box-shadow: 0 0 5px gray;
+}
+
+.topnav a.active {
+    /* background-color: #af1d1d; */
+    background-image: linear-gradient(rgb(153, 18, 18), rgb(94, 26, 6));
+    color: white;
+}
+
+.topnav .icon {
+    display: none;
+}
+
+@media screen and (max-width: 600px) {
+    .container {
+        padding: 0;
+    }
+
+    .topnav {
+        width: 100%;
+    }
+
+    .topnav a:not(:first-child) {
+        display: none;
+    }
+
+    .topnav a.icon {
+        float: right;
+        display: block;
+    }
+
+    /* .topnav.responsive {
+        position: relative;
+    } */
+
+    .topnav.responsive .icon {
+        position: absolute;
+        right: 0;
+        top: 0;
+    }
+
+    .topnav.responsive a {
+        float: none;
+        display: block;
+        text-align: left;
+    }
+
+}
+
+/* end header */
+
+/* main */
+.main {
+    margin: 30px 0 100px 0;
+    background-color: #402b2b;
+    border-radius: 7px;
+    display: grid;
+}
+/* end main */
+
+/* footer */
+.footer {
+    color: #fda500;
+    background-color: #6b2e2e;
+    height: 70px;
+    line-height: 70px;
+    text-align: center;
+    box-shadow: 0px -2px 6px #6e6e6e;
+    border-radius: 5px 5px 0px 0px;
+    position: fixed;
+    bottom: 0;
+    width: 80%;
+}
+
+@media screen and (max-width: 600px) {
+    .footer {
+        width: 100% !important;
+    }
+}
+
+/* end footer */
+
+/* outer */
+#scrollToTopBtn {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    right: 30px;
+    z-index: 99;
+    font-size: 18px;
+    border: none;
+    outline: none;
+    background-color: #af1d1d;
+    color: white;
+    cursor: pointer;
+    padding: 15px;
+    border-radius: 4px;
+}
+#scrollToTopBtn:hover {
+    background-color: #6b2e2e;
+}
