@@ -1,0 +1,24 @@
+{
+  "name": "blog.wolopolo.xyz",
+  "version": "1.0.0",
+  "description": "Blog of @wolopolo",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wolopolo/wolopolo.github.io.git"
+  },
+  "author": "wolopolo",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/wolopolo/wolopolo.github.io/issues"
+  },
+  "homepage": "https://github.com/wolopolo/wolopolo.github.io#readme",
+  "dependencies": {
+    "dotenv": "^16.0.3",
+    "ejs": "^3.1.8",
+    "express": "^4.18.2"
+  }
+}
