@@ -1,8 +1,10 @@
 const fs = require('fs');
 const util = require('../util/util');
+const showdown  = require('showdown');
+const simpleGit = require('simple-git');
 
 
-const POST_PATH = '/posts';
+const POST_PATH = '/api/posts';
 
 function getPost(req, res, next) {
     fs.readFile("data/category.json", "utf-8", (error, data) => {
@@ -15,7 +17,7 @@ function getPost(req, res, next) {
         posts = posts.sort((o1, o2) => {
             let t1 = new Date(o1.createdDate).getTime();
             let t2 = new Date(o2.createdDate).getTime();
-            return t1 - t2;
+            return t2 - t1;
         }).filter((item, pos, ary) => {
             return !pos || item.id != ary[pos - 1].id;
         });
@@ -41,9 +43,9 @@ function savePost(req, res, next) {
     if (util.isEmpty(body.id)) {
         body.id = new Date().getTime();
     }
-
+    
     // save json data of post
-    fs.writeFile('data/' + body.id + '.json', body, (error) => {
+    fs.writeFile('data/' + body.id + '.json', JSON.stringify(body), (error) => {
         if(error) {
             console.error(error.message);
             next({ status: 500, message: error.message});
@@ -66,24 +68,24 @@ function savePost(req, res, next) {
             quote: body.quote
         };
         const categories = JSON.parse(data);
-        const categoryIndex = categories.find(c => c.name == body.category);
-        if(categoryIndex == undefined) next({status: 500, message: "Category không tồn tại!"});
+        const categoryIndex = categories.findIndex(c => c.name == body.category);
+        if(categoryIndex == -1) next({status: 500, message: "Category không tồn tại!"});
         const category = categories[categoryIndex];
-        const postIndex = category.posts.find(p => p.id == body.id);
-        if(postIndex == undefined) {
+        const postIndex = category.posts.findIndex(p => p.id == body.id);
+        if(postIndex == -1) {
             category.posts.push(newPostInCategory)
         } else {
             category.posts[postIndex] = newPostInCategory;
         }
         
-        fs.writeFile('data/category.json', categories, (err) => {
+        fs.writeFile('data/category.json', JSON.stringify(categories), (err) => {
             if(err) {
                 console.error(err.message);
                 next({ status: 500, message: err.message});
                 return;
             }
 
-            res.status(200);
+            res.json({status: 200, data: body})
             res.end();
         })
     });
@@ -113,21 +115,90 @@ function publishPost(req, res, next) {
                     return;
                 }
                 
-                template.replace("$post_content", .content);
+                const html = generateHTMLPost(template.toString(), post);
+
+                const fileIndex = files.findIndex(file => {
+                    var parts = file.split("_");
+                    return parts[parts.length - 1] == (postId + ".html");
+                })
+
+                // xóa file cũ nếu có
+                if(fileIndex != -1) {
+                    fs.unlink("post/" + files[fileIndex], (err) => {
+                        if (err) console.log(err.message);
+                    });
+                }
+
+                // tạo file mới
+                let fileName = util.toLowerCaseNonAccentVietnamese(post.title).replaceAll(' ', '_') 
+                    + "_" + post.id + ".html";
+                fs.writeFile("post/" + fileName, html, (err) => {
+                    if(err) {
+                        console.error(err);
+                        next({ status: 500, message: err.message});
+                        return;
+                    };
+
+                    let isSuccess = comitAndPushPostToGit("[post] " + fileName);
+                    if(isSuccess) {
+                        res.json({status: 200, message: "Success"});
+                        res.end();
+                    } else {
+                        res.status(500);
+                        res.json({status: 500, message: "Fail"});
+                        res.end();
+                    }
+                })
             })
-    
-            const index = files.find(file => {
-                var parts = file.split("_");
-                return parts[parts.length - 1] == (postId + ".html");
-            })
-            if(index == undefined) {
-                // create new file
-    
-            } else {
-                // override
-            }
         })
     });
+}
+
+function generateHTMLPost(template, post) {
+    let mdStr = post.content;
+    const converter = new showdown.Converter();
+    converter.setOption('noHeaderId', true);
+    let htmlStr = converter.makeHtml(mdStr);
+
+    let titleLevels = [];
+    while(/###\s.+\n/.test(mdStr)) {
+        let h3 = /###\s.+\n/.exec(mdStr)[0].replace('### ', '').replace('\n', '');
+        titleLevels.push(h3);
+        mdStr = mdStr.replace(/###\s.+\n/, "$$$");
+    }
+
+    let headerIndex = 0;
+    let titleLevel = '';
+    while(/<h3>/.test(htmlStr)) {
+        let idHeader = 'ih' + headerIndex;
+        htmlStr = htmlStr.replace('<h3>', '<h3 id="' + idHeader + '">');
+        titleLevel += '<a href="#' + idHeader + '">' + titleLevels[headerIndex] + '</a>'
+        headerIndex++;
+    }
+
+
+    template = template.replace("$postTitle", post.title);
+    template = template.replace("$postContent", htmlStr);
+    template = template.replace("$titleLevel", titleLevel);
+    template = template.replace("$createdDate", new Date(post.createdDate).toLocaleDateString('vi'));
+
+    return template;
+}
+
+function comitAndPushPostToGit(messageCommit) {
+    const git = simpleGit.simpleGit("../", { binary: 'git' });
+    git.raw('add', '.', err => console.error(err.message));
+    git.raw('commit', '-m ' + messageCommit, err => console.error(err.message));
+    git.raw('push', err => console.error(err.message));
+    return true;
+}
+
+function deletePost(req, res, next) {
+    // xóa ở data
+
+    // xóa ở category
+
+    // xóa ở post nếu có
 }
 
 module.exports = [
@@ -150,5 +221,10 @@ module.exports = [
         path: POST_PATH + "/publish/:postId",
         method: 'POST',
         service: publishPost
+    },
+    {
+        path: POST_PATH + "/:postId",
+        method: 'DELETE',
+        service: deletePost
     }
 ]

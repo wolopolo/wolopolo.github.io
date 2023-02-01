@@ -1,10 +1,13 @@
 const express = require("express");
+var bodyParser = require('body-parser')
 const fs = require("fs");
 require('dotenv').config();
 
 const app = express();
 app.use(express.static(__dirname + '/publics'));
 app.set('view engine', 'ejs');
+
+app.use(bodyParser.json());
 
 app.get('/', (req, res) => {
     res.render('home', { error: null });

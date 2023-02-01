@@ -1,6 +1,6 @@
 const fs = require('fs');
 
-const CATEGORY_PATH = '/categories';
+const CATEGORY_PATH = '/api/categories';
 
 function getCategories(req, res, next) {
     fs.readFile("data/category.json", "utf-8", (error, data) => {
@@ -8,7 +8,8 @@ function getCategories(req, res, next) {
             next({ status: 500, message: error.message });
             return;
         }
-        let categories = JSON.parse(data).map(c => { c.name });
+        
+        let categories = JSON.parse(data).map(c => { return { name: c.name }; })
         res.json({ status: 200, data: categories });
         res.end();
     });

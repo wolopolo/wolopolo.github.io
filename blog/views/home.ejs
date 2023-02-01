@@ -14,17 +14,25 @@
         <div class="folder" id="folder">
             <div class="head_folder">Danh sách bài viết</div>
             <a class="e_post new_post" href="#" onclick="createNewPost()">Tạo bài viết mới</a>
+            <div id="list_post"></div>
         </div>
         <div class="editor">
             <div class="tool">
                 #id: <input type="text" id="postId" disabled/>
                 Tên bài viết: <input type="text" id="postTitle"/>
-                Tên bài danh mục: <select name="category" id="category"></select>
-                <button onclick="saveTemporary()">Lưu</button>
+                Loại bài viết: <select name="category" id="category"></select>
+                <button onclick="savePost()">Lưu</button>
+                <button onclick="deletePost()">Xóa</button>
                 <button onclick="publishPost()">Publish</button>
             </div>
             <div>
                 Trích dẫn: <input type="text" id="postQuote"/>
+            </div>
+            <div>
+                Ngày tạo: <i id="createdDateViewer"></i><input type="text" id="createdDate" disabled style="display: none;"/>
+            </div>
+            <div>
+                Ngày cập nhật: <i id="updatedDateViewer"></i>
             </div>
             <textarea id="md_editor"></textarea>
         </div>
