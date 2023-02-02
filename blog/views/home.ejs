@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -9,6 +10,7 @@
     <link rel="stylesheet" href="/styles/home.css">
     <title>Tạo bài viết</title>
 </head>
+
 <body>
     <div class="container">
         <div class="folder" id="folder">
@@ -18,25 +20,30 @@
         </div>
         <div class="editor">
             <div class="tool">
-                #id: <input type="text" id="postId" disabled/>
-                Tên bài viết: <input type="text" id="postTitle"/>
+                #id: <input type="text" id="postId" disabled />
+                Tên bài viết: <input type="text" id="postTitle" />
                 Loại bài viết: <select name="category" id="category"></select>
                 <button onclick="savePost()">Lưu</button>
                 <button onclick="deletePost()">Xóa</button>
                 <button onclick="publishPost()">Publish</button>
             </div>
             <div>
-                Trích dẫn: <input type="text" id="postQuote"/>
+                Trích dẫn: <input type="text" id="postQuote" />
             </div>
             <div>
-                Ngày tạo: <i id="createdDateViewer"></i><input type="text" id="createdDate" disabled style="display: none;"/>
+                Ngày tạo: <i id="createdDateViewer"></i><input type="text" id="createdDate" disabled
+                    style="display: none;" />
             </div>
             <div>
                 Ngày cập nhật: <i id="updatedDateViewer"></i>
+            </div>
+            <div>
+                Trạng thái: <input type="text" id="postStatus" disabled />
             </div>
             <textarea id="md_editor"></textarea>
         </div>
     </div>
 </body>
 <script src="/scripts/main.js"></script>
+
 </html>

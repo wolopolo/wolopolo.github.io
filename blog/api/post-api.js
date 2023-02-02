@@ -1,6 +1,6 @@
 const fs = require('fs');
 const util = require('../util/util');
-const showdown  = require('showdown');
+const showdown = require('showdown');
 const simpleGit = require('simple-git');
 
 
@@ -8,8 +8,8 @@ const POST_PATH = '/api/posts';
 
 function getPost(req, res, next) {
     fs.readFile("data/category.json", "utf-8", (error, data) => {
-        if(error) {
-            next({status: 500, message: error.message});
+        if (error) {
+            next({ status: 500, message: error.message });
             return;
         }
         let posts = [];
@@ -21,18 +21,18 @@ function getPost(req, res, next) {
         }).filter((item, pos, ary) => {
             return !pos || item.id != ary[pos - 1].id;
         });
-        res.json({status: 200, data: posts});
+        res.json({ status: 200, data: posts });
         res.end();
     });
 };
 
 function getPostDetail(req, res, next) {
     fs.readFile("data/" + req.params.postId + ".json", "utf-8", (error, data) => {
-        if(error) {
-            next({status: 500, message: error.message});
+        if (error) {
+            next({ status: 500, message: error.message });
             return;
         }
-        res.json({status: 200, data: JSON.parse(data)});
+        res.json({ status: 200, data: JSON.parse(data) });
         res.end();
     });
 };
@@ -42,51 +42,61 @@ function savePost(req, res, next) {
     // new post
     if (util.isEmpty(body.id)) {
         body.id = new Date().getTime();
+        body.status = 'TEMPORARY';
     }
-    
+
     // save json data of post
     fs.writeFile('data/' + body.id + '.json', JSON.stringify(body), (error) => {
-        if(error) {
+        if (error) {
             console.error(error.message);
-            next({ status: 500, message: error.message});
+            next({ status: 500, message: error.message });
             return;
         } else {
             console.info("Save file sucessful!");
         }
     });
-    
+
     fs.readFile('data/category.json', (error, data) => {
-        if(error) {
+        if (error) {
             console.error(error.message);
-            next({ status: 500, message: error.message});
+            next({ status: 500, message: error.message });
             return;
         }
         const newPostInCategory = {
             id: body.id,
             title: body.title,
             createdDate: body.createdDate,
-            quote: body.quote
+            quote: body.quote,
+            status: body.status
         };
         const categories = JSON.parse(data);
         const categoryIndex = categories.findIndex(c => c.name == body.category);
-        if(categoryIndex == -1) next({status: 500, message: "Category không tồn tại!"});
+        if (categoryIndex == -1) next({ status: 500, message: "Category không tồn tại!" });
         const category = categories[categoryIndex];
         const postIndex = category.posts.findIndex(p => p.id == body.id);
-        if(postIndex == -1) {
+        if (postIndex == -1) {
             category.posts.push(newPostInCategory)
         } else {
             category.posts[postIndex] = newPostInCategory;
         }
-        
+
         fs.writeFile('data/category.json', JSON.stringify(categories), (err) => {
-            if(err) {
+            if (err) {
                 console.error(err.message);
-                next({ status: 500, message: err.message});
+                next({ status: 500, message: err.message });
                 return;
             }
 
-            res.json({status: 200, data: body})
-            res.end();
+            let result = comitAndPushPostToGit('save post: ' + body.ttitle);
+
+            if (result) {
+                res.json({ status: 200, data: body });
+                res.end();
+            } else {
+                res.status(500);
+                res.json({ status: 500, message: 'Có lỗi khi save data trên github' });
+                res.end();
+            }
         })
     });
 }
@@ -94,27 +104,27 @@ function savePost(req, res, next) {
 function publishPost(req, res, next) {
     const postId = req.params.postId;
     fs.readFile("data/" + postId + ".json", (error, data) => {
-        if(error) {
-            next({status: 500, message: error.message});
+        if (error) {
+            next({ status: 500, message: error.message });
             return;
         }
-        
+
         const post = JSON.parse(data);
 
-        fs.readdir("post", (error, files) => {
-            if(error) {
-                next({status: 500, message: error.message});
+        fs.readdir("../archive", (error, files) => {
+            if (error) {
+                next({ status: 500, message: error.message });
                 return;
             }
-    
+
             // load template
             // insert html post
-            fs.readFile("post/template.html", (error, template) => {
-                if(error) {
-                    next({status: 500, message: error.message});
+            fs.readFile("views/template.html", (error, template) => {
+                if (error) {
+                    next({ status: 500, message: error.message });
                     return;
                 }
-                
+
                 const html = generateHTMLPost(template.toString(), post);
 
                 const fileIndex = files.findIndex(file => {
@@ -123,29 +133,75 @@ function publishPost(req, res, next) {
                 })
 
                 // xóa file cũ nếu có
-                if(fileIndex != -1) {
-                    fs.unlink("post/" + files[fileIndex], (err) => {
+                if (fileIndex != -1) {
+                    fs.unlink("../archive/" + files[fileIndex], (err) => {
                         if (err) console.log(err.message);
                     });
                 }
 
                 // tạo file mới
-                let fileName = util.toLowerCaseNonAccentVietnamese(post.title).replaceAll(' ', '_') 
+                let fileName = util.toLowerCaseNonAccentVietnamese(post.title).replaceAll(' ', '_')
                     + "_" + post.id + ".html";
-                fs.writeFile("post/" + fileName, html, (err) => {
-                    if(err) {
+                fs.writeFile("../archive/" + fileName, html, (err) => {
+                    if (err) {
                         console.error(err);
-                        next({ status: 500, message: err.message});
+                        next({ status: 500, message: err.message });
                         return;
                     };
 
                     let isSuccess = comitAndPushPostToGit("[post] " + fileName);
-                    if(isSuccess) {
-                        res.json({status: 200, message: "Success"});
-                        res.end();
+                    if (isSuccess) {
+                        // update status of post and 
+                        // save json data of post
+                        post.status = "PUBLISHED";
+
+                        fs.writeFile('data/' + postId + '.json', JSON.stringify(post), (error) => {
+                            if (error) {
+                                console.error(error.message);
+                                next({ status: 500, message: error.message });
+                                return;
+                            } else {
+                                console.info("Save file sucessful!");
+                            }
+                        });
+
+                        fs.readFile('data/category.json', (error, data) => {
+                            if (error) {
+                                console.error(error.message);
+                                next({ status: 500, message: error.message });
+                                return;
+                            }
+                            const newPostInCategory = {
+                                id: post.id,
+                                title: post.title,
+                                createdDate: post.createdDate,
+                                quote: post.quote,
+                                status: post.status
+                            };
+                            const categories = JSON.parse(data);
+                            const categoryIndex = categories.findIndex(c => c.name == post.category);
+                            if (categoryIndex == -1) next({ status: 500, message: "Category không tồn tại!" });
+                            const category = categories[categoryIndex];
+                            const postIndex = category.posts.findIndex(p => p.id == post.id);
+                            if (postIndex == -1) {
+                                category.posts.push(newPostInCategory)
+                            } else {
+                                category.posts[postIndex] = newPostInCategory;
+                            }
+
+                            fs.writeFile('data/category.json', JSON.stringify(categories), (err) => {
+                                if (err) {
+                                    console.error(err.message);
+                                    next({ status: 500, message: err.message });
+                                    return;
+                                }
+                                res.json({ status: 200, message: "Success" });
+                                res.end();
+                            })
+                        });
                     } else {
                         res.status(500);
-                        res.json({status: 500, message: "Fail"});
+                        res.json({ status: 500, message: "Fail" });
                         res.end();
                     }
                 })
@@ -161,7 +217,7 @@ function generateHTMLPost(template, post) {
     let htmlStr = converter.makeHtml(mdStr);
 
     let titleLevels = [];
-    while(/###\s.+\n/.test(mdStr)) {
+    while (/###\s.+\n/.test(mdStr)) {
         let h3 = /###\s.+\n/.exec(mdStr)[0].replace('### ', '').replace('\n', '');
         titleLevels.push(h3);
         mdStr = mdStr.replace(/###\s.+\n/, "$$$");
@@ -169,7 +225,7 @@ function generateHTMLPost(template, post) {
 
     let headerIndex = 0;
     let titleLevel = '';
-    while(/<h3>/.test(htmlStr)) {
+    while (/<h3>/.test(htmlStr)) {
         let idHeader = 'ih' + headerIndex;
         htmlStr = htmlStr.replace('<h3>', '<h3 id="' + idHeader + '">');
         titleLevel += '<a href="#' + idHeader + '">' + titleLevels[headerIndex] + '</a>'
@@ -194,11 +250,76 @@ function comitAndPushPostToGit(messageCommit) {
 }
 
 function deletePost(req, res, next) {
-    // xóa ở data
+    const postId = req.params.postId;
 
-    // xóa ở category
+    // xóa ở data
+    fs.readFile('data/' + postId + ".json", (err, data) => {
+        if (err) {
+            console.error(err.message);
+            next({ status: 500, message: err.message });
+            return;
+        }
+        const post = JSON.parse(data);
+        fs.unlink("data/" + postId + ".json", (error) => {
+            if (error) {
+                console.error(error.message);
+                next({ status: 500, message: error.message });
+                return;
+            }
+        });
+
+        // xóa ở category
+        fs.readFile('data/category.json', (error, data) => {
+            if (error) {
+                console.error(error.message);
+                next({ status: 500, message: error.message });
+                return;
+            }
+            const categories = JSON.parse(data);
+            const categoryIndex = categories.findIndex(c => c.name == post.category);
+            if (categoryIndex == -1) next({ status: 500, message: "Category không tồn tại!" });
+            const category = categories[categoryIndex];
+            category.posts = category.posts.filter(p => p.id != post.id);
+
+            fs.writeFile('data/category.json', JSON.stringify(categories), (err) => {
+                if (err) {
+                    console.error(err.message);
+                    next({ status: 500, message: err.message });
+                    return;
+                }
+            })
+        });
+    });
 
     // xóa ở post nếu có
+    fs.readdir("../archive", (error, files) => {
+        if (error) {
+            next({ status: 500, message: error.message });
+            return;
+        }
+        const fileIndex = files.findIndex(file => {
+            var parts = file.split("_");
+            return parts[parts.length - 1] == (postId + ".html");
+        })
+
+        // xóa file cũ nếu có
+        if (fileIndex != -1) {
+            fs.unlink("../archive/" + files[fileIndex], (err) => {
+                if (err) console.log(err.message);
+            });
+        }
+    })
+
+    let isSuccess = comitAndPushPostToGit("[delete] delete post :" + postId);
+
+    if (isSuccess) {
+        res.json({ status: 200, message: "Success" });
+        res.end();
+    } else {
+        res.json({ status: 500, message: "Đã có lỗi xảy ra" });
+        res.end();
+    }
+
 }
 
 module.exports = [
