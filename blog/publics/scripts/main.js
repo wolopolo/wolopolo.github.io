@@ -68,6 +68,7 @@ function createNewPost() {
         document.getElementById("postQuote").value = '';
         document.getElementById("createdDateViewer").innerHTML = '';
         document.getElementById("updatedDateViewer").innerHTML = '';
+        document.getElementById("postStatus").value = '';
         simplemde.value('');
         CURRENT_POST = '';
     }
@@ -82,6 +83,7 @@ function renderPost(post) {
     document.getElementById("createdDateViewer").innerHTML = new Date(post.createdDate).toLocaleDateString('vi');
     document.getElementById("updatedDateViewer").innerHTML = post.updatedDate == null || post.updatedDate == undefined ? "" : new Date(post.updatedDate).toLocaleDateString('vi');
     document.getElementById("postStatus").value = post.status;
+    document.getElementById("postLink").value = post.link;
     simplemde.value(post.content);
 }
 
@@ -154,6 +156,7 @@ function savePost() {
     post["content"] = content;
 
     post["status"] = document.getElementById("postStatus").value;
+    post["link"] = document.getElementById("postLink").value;
 
     fetch(API + POST_PATH, {
         method: 'POST',
@@ -191,6 +194,7 @@ function publishPost() {
         .then(response => {
             if (response.status == 200) {
                 window.alert("Xuất bản thành công!");
+                renderPost(response.data);
             } else {
                 window.alert("Xuất bản thất bại!");
             }
@@ -213,6 +217,7 @@ function deletePost() {
                     CURRENT_POST = '';
                     CURRENT_POST_ID = '';
                     simplemde.value('');
+                    loadPosts();
                     createNewPost();
                     window.alert("Xóa thành công!");
                 } else {
