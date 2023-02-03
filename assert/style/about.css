@@ -24,8 +24,7 @@
 }
 
 .card {
-    height: 321px;
-    width: 823px;
+    width: 70%;
     background-color: #604745;
     margin: auto;
     border-radius: 5px;
@@ -34,7 +33,6 @@
 
 .avatar {
     width: 30%;
-    height: 100%;
     /* background-color: #9e7976; */
     border-radius: 5px 0 0 5px;
     background-image: url("../image/avatar.jpg");
@@ -44,6 +42,29 @@
 .info {
     width: 70%;
     padding: 20px;
+}
+
+@media screen and (max-width: 600px) {
+    .main {
+        margin-top: 50px;
+    }
+
+    .card {
+        width: 80%;
+        display: flex;
+        flex-direction: column;
+        padding-bottom: 17px;
+    }
+
+    .avatar {
+        width: 100px;
+        height: 150px;
+        margin: auto;
+    }
+
+    .info {
+        width: 90%;
+    }
 }
 
 .e_info {
