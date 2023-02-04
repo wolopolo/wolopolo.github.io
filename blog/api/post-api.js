@@ -243,8 +243,7 @@ function generateHTMLPost(template, post) {
         headerIndex++;
     }
 
-
-    template = template.replace("$postTitle", post.title);
+    template = template.replaceAll("$postTitle", post.title);
     template = template.replace("$postContent", htmlStr);
     template = template.replace("$titleLevel", titleLevel);
     template = template.replace("$createdDate", new Date(post.createdDate).toLocaleDateString('vi'));

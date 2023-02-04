@@ -67,6 +67,12 @@
     background-color: #7a3636;
 }
 
+.comment {
+    padding: 5px 30px;
+    color: white;
+    width: 92%;
+}
+
 @media screen and (max-width: 600px) {
     .main {
         margin: 50px 0px;
@@ -76,4 +82,16 @@
         display: none;
     }
 
+    .table_content {
+        order: 3;
+    }
+
+    .content {
+        order: 2;
+    }
+
+    .comment {
+        order: 1;
+        width: 85%;
+    }
 }
